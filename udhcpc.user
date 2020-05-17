@@ -27,16 +27,23 @@ jgs_ip_compare() {
                 logger -p daemon.info "DHCP Lease of $ip extended on $interface."
         fi
 }
-# If the file doesn't exist, create it and add it to the file. This will result in a comparison if it exists.
+# If the file doesn't exist or doesn't contain an IP address, create it and add it to the file. This will result in a comparison if it exists.
 jgs_file_check() {
-        if [[ -f /etc/.ip_addrs_"$interface" ]]; then
+        if [[ -f /etc/.ip_addrs_"$interface" ]] && [[ $(tail -1 /etc/.ip_addrs_"$interfaces") =~ ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; then
         jgs_ip_compare
-else
-        # If it doesn't eixst, we're just going to create the file and exit.
-        touch /etc/.ip_addrs_"$interface"
+                # If the file exists but it has junk, throw an error, but try and add the new data to the end
+                if [[ -f /etc/.ip_addrs_"$interface" ]]; then
+                        logger -p daemon.error "Error in log file"
+
+                else
+                # If it doesn't eixst, we're just going to create the file and exit.
+                touch /etc/.ip_addrs_"$interface"
+                logger -p daemon.notice "No IP record exists; creating."
+                fi
+        #Again, either way we're going to try and write it for next time
         echo "$ip" >> /etc/.ip_addrs_"$interface"
-        logger -p daemon.notice "No IP record exists; creating."
-fi
+        fi
 }
 jgs_file_check
 exit 0
+
