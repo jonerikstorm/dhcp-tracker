@@ -1,0 +1,42 @@
+#! /bin/bash
+# User script on DHCP **client** event
+# This script is called by /lib/netifd/dhcp.script which is fired when udhcpc runs
+# It is not part of OpenWRT's hotplug system
+#
+# Example environment:
+# J_T5_netmask=0 subnet=255.255.255.0 router=141.126.98.1
+# opt58=00003840 T_J_A2_1=object opt59=00006270 T_J_A4_1=object SHLVL=1 J_V_keep=0
+# T_J_V_ipaddr=array T_J_A6_1=string HOME=/ T_J_A6_2=string T_J_T5_source=string J_T5_target=0.0.0.0
+# T_J_T3_mask=string T_J_V_interface=string interface=eth0.2 T_J_V_routes=array J_A2_1=J_T3
+# dns=71.10.216.1 71.10.216.2 T_J_V_link_up=boolean T_J_T1_hostname=string T_J_V_dns=array T_J_V_action=int
+# T_J_T3_ipaddr=string J_A4_1=J_T5 K_J_A2= 1 serverid=66.214.200.1 J_V_ipaddr=J_A2 J_A6_1=71.10.216.1
+# TERM=linux K_J_A4= 1 J_A6_2=71.10.216.2 broadcast=255.255.255.255 PROTO_DNS=71.10.216.1 71.10.216.2 J_T5_source=141.126.98.28
+# K_J_A6= 1 2 PATH=/usr/sbin:/usr/bin:/sbin:/bin T_J_V_data=object J_T3_mask=255.255.255.0 J_V_interface=wan J_V_routes=J_A4
+# ip=141.126.98.28 K_J_V= action link_up data keep ipaddr routes dns interface J_V_link_up=1 J_T1_hostname=castle T_J_T1_leasetime=int T_J_T5_gateway=string J_V_dns=J_A6
+# mask=24 lease=28800 J_V_action=0 J_T3_ipaddr=141
+#
+# Compare the new IP received in the environment with the one we have in the file
+jgs.ip_compare() {
+        if [[ $(tail -1 /etc/.ip_addrs_"$interface") != "$ip" ]]; then
+                # Log if there is a change
+                logger -p daemon.warn "WAN address changed to $ip"
+                # Update the comparison file for next time.
+                echo "$ip" >> /etc/.ip_addrs_"$interface"
+        else
+                #Just make note of the update
+                logger -p daemon.info "DHCP Lease of $ip extended on $interface."
+        fi
+}
+# If the file doesn't exist, create it and add it to the file. This will result in a comparison if it exists.
+jgs.file_check() {
+        if [[ -f /etc/.ip_addrs_"$interface" ]]; then
+        jgs.ip_compare
+else
+        # If it doesn't eixst, we're just going to create the file and exit.
+        touch /etc/.ip_addrs_"$interface"
+        echo "$ip" >> /etc/.ip_addrs_"$interface"
+        logger -p daemon.notice "No IP record exists; creating." 
+fi
+}
+jgs.file_check
+exit 0
