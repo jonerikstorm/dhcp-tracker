@@ -1,0 +1,5 @@
+#!/bin/sh
+if [[ -f /etc/udhcpc.user ]]; then 
+  mv /etc/udhcpc.user /etc/udhcpc.old
+fi
+exit 0
