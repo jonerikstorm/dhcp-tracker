@@ -15,7 +15,7 @@ logger -p daemon.debug user script fired
 #
 jgs_ip_compare()
 {
-        if [[ $(tail -1 /etc/.ip_addrs_"$interface") != "$ip" ]]; then
+	if [[ $(tail -1 /etc/.ip_addrs_"$interface" | cut -d $'\t' -f1) != "$ip" ]]; then
                 # Log if there is a change
                 logger -p daemon.warn "WAN address changed to $ip"
                 # Update the comparison file for next time. Include a tab separated timestamp accurate to the minute
