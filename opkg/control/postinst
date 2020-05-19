@@ -1,13 +1,10 @@
 #!/bin/bash
-# If the first line of the existing script contains a shebang, delete it. It's not needed.
-# Otherwise, just append it to the end
-# bash has to be installed by now
-if [[ -f /etc/udhcpc.old]] && [[ $(cat /etc/udhcpc.old | //one line//) =~ ^shebang ]]; then 
-  sed remove first line
-fi
 # Add the call to our script at the beginning and clean up
 printf "source /etc/dhcp-update\n" > udhcpc.user
 if [[ -f /etc/udhcp.old]]; then 
   cat udhcpc.old >> udhcpc.user
   rm /etc/udhcpc.old
 fi
+#Calling script must use bash
+sed -i '1c#!/bin/bash' /lib/netifd/dhcp.script 
+exit 0
