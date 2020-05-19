@@ -1,5 +1,5 @@
 #!/bin/bash
-cp dhcp-update /opkg/data/etc/dhcp-update
+cp dhcp-update ./opkg/data/etc/dhcp-update
 pushd opkg/control/
 tar --numeric-owner --group=0 --owner=0 -czf ../control.tar.gz ./*
 popd

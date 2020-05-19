@@ -1,1 +1,54 @@
-touch
+#!/bin/bash
+logger -p daemon.debug user script fired
+#
+# User script on DHCP **client** event
+# This script is sourced by /lib/netifd/dhcp.script which is fired when udhcpc runs so we need to alter that script to use bash
+# Strangely, it seems to pass the environment variables in the call to this script anyway, so I'm not sure why we need
+# to do this.
+#
+# It is not part of OpenWRT's hotplug system.
+#
+# Environment variables of interest for this script:
+# WAN facing settings: $subnet, $router, $interface, $dns (list of ips), $broadcast, $ip, $mask (CIDR bit value?), $lease (DHCP lease length in seconds)   
+#
+# Compare the new IP received in the environment with the one we have in the file
+#
+jgs_ip_compare()
+{
+	if [[ $(tail -1 /etc/.ip_addrs_"$interface" | cut -d $'\t' -f1) != "$ip" ]]; then
+                # Log if there is a change
+                logger -p daemon.warn "WAN address changed to $ip"
+                # Update the comparison file for next time. Include a tab separated timestamp accurate to the minute
+		printf "$ip\t$(date -Iminutes)\n" >> /etc/.ip_addrs_"$interface"
+        else
+                #Just make note of the update
+                logger -p daemon.info "DHCP Lease of $ip extended on $interface."
+        fi
+}
+
+# If the file doesn't exist or doesn't contain an IP address, create it and add it to the file. This will result in a comparison if it exists. 
+# We take the last line of the file and cut out the first TSV field and compare it to a regex for a valid IPv4 address.
+# We need bash for the regex comparison and the double bracket comparison operators
+
+jgs_file_check()
+{
+        if [[ -f /etc/.ip_addrs_"$interface" ]] && [[ $(tail -1 /etc/.ip_addrs_"$interface" | cut -d $'\t' -f1) =~ ^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; then
+	        logger -p daemon.debug "Valid IP address found, calling compare function."
+		jgs_ip_compare
+	else
+		# If the file exists but it has junk, throw an error, but try and add the new data to the end
+		if [[ -f /etc/.ip_addrs_"$interface" ]]; then 
+			logger -p daemon.error "Error in log file" 
+
+		else
+			# If it doesn't eixst, we're just going to create the file and exit.
+        		touch /etc/.ip_addrs_"$interface"
+			echo "IPv4 Address, Timestamp" >> /etc/.ip_addrs_"$interface"
+			logger -p daemon.notice "No IP record exists; creating."
+		fi
+		#Again, either way we're going to try and write it for next time
+		printf "$ip\t$(date -Iminutes)\n" >> /etc/.ip_addrs_"$interface"
+	fi
+}
+
+jgs_file_check
