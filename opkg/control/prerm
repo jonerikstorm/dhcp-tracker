@@ -1,0 +1,2 @@
+# restore /lib/netifd/dhcp.script to normal
+# remove source /etc/dhcp-update in /etc/udhcpc.user
