@@ -1,0 +1,9 @@
+#!/bin/bash
+# If the first line of the existing script contains a shebang, delete it. It's not needed.
+# Otherwise, just append it to the end
+# bash has to be installed by now
+if [[ $(cat /etc/udhcpc.old | //one line//) =~ ^shebang ]]; then 
+  sed remove first line
+fi
+# Put the old stuff at the end of the file
+cat udhcpc.old >> udhcpc.user
