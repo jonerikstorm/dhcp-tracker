@@ -5,5 +5,7 @@
 if [[ $(cat /etc/udhcpc.old | //one line//) =~ ^shebang ]]; then 
   sed remove first line
 fi
-# Put the old stuff at the end of the file
+# Add the call to our script at the beginning and clean up
+printf "source /etc/dhcp-update\n" > udhcpc.user
 cat udhcpc.old >> udhcpc.user
+rm /etc/udhcpc.old
