@@ -1,5 +1,5 @@
 Package: dhcp_data_logger
-Version: 1.0.0.
+Version: 1.0.0
 Architecture: all
 Maintainer: jonerik@gmail.com
 Description: This package creates a tab-separated values text file of your WAN DHCP address updates with a timestamp.
